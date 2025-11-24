@@ -1,0 +1,62 @@
+services:
+  backend:
+    container_name: restaurants_booking_admin_api
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+      - "5555:5555"
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      - db
+      - redis
+    networks:
+      - restaurants_booking_admin_network
+
+  db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5438:5436"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - restaurants_booking_admin_network
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - restaurants_booking_admin_network
+  prisma-studio:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "5556:5555"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NODE_ENV=development
+    depends_on:
+      - db
+    command: npx prisma studio
+volumes:
+  pgdata:
+networks:
+  restaurants_booking_admin_network:
+    driver: bridge

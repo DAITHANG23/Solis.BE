@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client"
+   output     = "./generated"
+   engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+
+model User {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  email               String   @unique
+  hash                String
+  date_of_birth       String?
+  last_name           String
+  first_name          String
+  role                String
+  gender              String
+  status              String
+  avatarUrl           String
+}
