@@ -22,5 +22,6 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src", "prisma.config.ts", "prisma/**/*"]
+  "include": ["src", "**/*spec.ts"], // ✅ Chỉ compile src
+  "exclude": ["node_modules", "dist", "test"]
 }

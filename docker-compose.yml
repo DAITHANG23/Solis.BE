@@ -6,12 +6,12 @@ services:
       dockerfile: Dockerfile.dev
     restart: unless-stopped
     ports:
-      - "8002:8002"
+      - "9002:9001"
       - "5555:5555"
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9001/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -29,7 +29,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5438:5436"
+      - "5438:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:

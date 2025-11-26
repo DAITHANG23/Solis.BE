@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserService } from 'src/users/user.service';
+import { UserService } from 'src/user/user.service';
 import { SigninDto, SignupDto } from './dto';
 
 @Injectable()
@@ -35,6 +35,7 @@ export class AuthService {
           avatarUrl: dto.avatarUrl,
           role: dto.role,
           status: dto.status,
+          address: dto.address,
           hash,
         },
       });

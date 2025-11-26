@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import type { User } from '../../prisma/generated/client';
 import { UserDto } from './dto';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/guard';
@@ -10,10 +9,11 @@ import {
   ApiCreatedResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import type { User } from 'generated/prisma';
 
 @ApiTags('User')
 @UseGuards(JwtAuthGuard)
-@Controller('users')
+@Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
   @ApiBearerAuth()
@@ -30,7 +30,7 @@ export class UserController {
   }
 
   @ApiBearerAuth()
-  @Patch()
+  @Patch('updateUser')
   updateUser(@GetUser('id') userId: string, @Body() dto: UserDto) {
     return this.userService.updateUser(userId, dto);
   }
