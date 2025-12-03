@@ -19,8 +19,10 @@ RUN npx prisma generate
 COPY docker-entrypoint.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+RUN npm run build
+
 
 EXPOSE 9002
 EXPOSE 5555
 
-CMD [ "npm", "run", "start:dev" ]
+CMD [ "npm", "run", "start:prod" ]
