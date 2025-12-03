@@ -25,4 +25,4 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 EXPOSE 9001
 EXPOSE 5555
 
-CMD [ "npm", "run", "start:prod" ]
+CMD ["node", "dist/main.js"]
