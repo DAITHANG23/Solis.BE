@@ -36,7 +36,7 @@ services:
       start_period: 10s
     depends_on:
       - redis
-    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+    command: sh -c "npm run start:prod"
     networks:
       - restaurants_booking_admin_network
 
