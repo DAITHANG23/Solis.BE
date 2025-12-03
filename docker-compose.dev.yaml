@@ -1,0 +1,73 @@
+services:
+  backend:
+    container_name: restaurants_booking_admin_api
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "9002:9001"
+      - "5555:5555"
+
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - FRONTEND_URL=${FRONTEND_URL}
+      - PORT=${PORT}
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379  
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      - db
+      - redis
+    command: sh -c "npx prisma migrate deploy && npm run start:dev"
+    networks:
+      - restaurants_booking_admin_network
+  db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5438:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - restaurants_booking_admin_network
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - restaurants_booking_admin_network
+  prisma-studio:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "5556:5555"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NODE_ENV=development
+    depends_on:
+      - db
+    command: npx prisma studio
+volumes:
+  pgdata:
+networks:
+  restaurants_booking_admin_network:
+    driver: bridge  
