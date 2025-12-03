@@ -9,4 +9,10 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('/health')
+  health(): string {
+    // check DB + Redis nếu cần
+    return 'OK';
+  }
 }

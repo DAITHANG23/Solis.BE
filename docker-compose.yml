@@ -33,10 +33,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 10s
+      start_period: 60s
     depends_on:
       - redis
-    command: sh -c "npm run start:prod"
+    command: sh -c "./wait-for-it.sh redis:6379 -- npm run start:prod"
     networks:
       - restaurants_booking_admin_network
 
