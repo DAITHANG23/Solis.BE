@@ -22,7 +22,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN npm run build
 
 
-EXPOSE 9002
+EXPOSE 9001
 EXPOSE 5555
 
 CMD [ "npm", "run", "start:prod" ]
