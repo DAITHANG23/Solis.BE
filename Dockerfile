@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache netcat-openbsd
+RUN apk add --no-cache curl netcat-openbsd
 
 COPY package*.json ./
 COPY prisma ./prisma
@@ -21,7 +21,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN npm run build
 
-
+ENTRYPOINT ["docker-entrypoint.sh"]
 EXPOSE 9001
 EXPOSE 5555
 
