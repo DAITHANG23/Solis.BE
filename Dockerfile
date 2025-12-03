@@ -2,27 +2,29 @@ FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache curl netcat-openbsd
+RUN apk add --no-cache curl netcat-openbsd bash
 
+# copy package files trước để tận dụng layer cache
 COPY package*.json ./
+RUN npm ci
+
+# copy prisma trước nếu cần
 COPY prisma ./prisma
-
-RUN npm install
-
-RUN npm install -g @nestjs/cli
-
-COPY . .
-
 RUN npx prisma generate
 
+# copy toàn bộ source code
+COPY . .
 
-COPY docker-entrypoint.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
+# build NestJS
 RUN npm run build
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-EXPOSE 9001
-EXPOSE 5555
+# copy entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# expose ports
+EXPOSE 9001
+
+# start backend thông qua entrypoint
+ENTRYPOINT ["sh", "/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "dist/main.js"]
