@@ -3,8 +3,8 @@
 # Make sure our backend app does not start before db ready
 echo "Waiting for database...."
 
-while ! nc -z db 5432; do
-  sleep 0.1 # short pause between checks
+while ! nc -z $DB_HOST $DB_PORT; do
+  sleep 0.1
 done
 echo "Database started"
 

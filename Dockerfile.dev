@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache netcat-openbsd
+RUN apk add --no-cache curl netcat-openbsd
 
 COPY package*.json ./
 COPY prisma ./prisma
