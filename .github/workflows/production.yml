@@ -1,0 +1,83 @@
+name: Production CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      
+      - run: npm ci
+      # - run: npm test
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat << EOF > .env
+          PORT=${{ secrets.PORT }}
+          NODE_ENV=production
+
+          # RDS PostgreSQL Configuration
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          EOF
+
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Copy files to EC2 server
+        run: |
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./* \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ec2-user/Solis.BE/
+
+      - name: Deploy on EC2
+        run: |
+          ssh -i private_key.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ec2-user/Solis.BE
+
+            docker-compose down
+            docker-compose build --no-cache
+            docker-compose up -d
+
+            sleep 10
+            docker-compose ps
+            docker-compose logs --tail=50
+
+            docker system prune -f
+          EOF
+
+      - name: Clean up
+        if: always()
+        run: rm -f private_key.pem
