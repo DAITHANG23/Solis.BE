@@ -26,5 +26,5 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 9001
 
 # start backend thông qua entrypoint
-ENTRYPOINT ["sh", "/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "dist/main.js"]

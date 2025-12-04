@@ -35,8 +35,7 @@ services:
       retries: 5
       start_period: 60s
     depends_on:
-      - redis
-    command: sh -c "./wait-for-it.sh redis:6379 -- npm run start:prod"
+      - redis         
     networks:
       - restaurants_booking_admin_network
 
