@@ -4,5 +4,5 @@ dist
 .env
 .env.*
 *.log
-docker-entrypoint.sh
+# docker-entrypoint.sh
 wait-for-it.sh

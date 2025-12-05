@@ -1,21 +1,28 @@
 #!/bin/sh
 set -e
 
-echo "Waiting for database..."
-while ! nc -z $DB_HOST $DB_PORT; do
-  sleep 0.1
-done
-echo "Database started"
+if [ "$NODE_ENV" = "production" ]; then
+  echo "Environment: PRODUCTION"
 
-echo "Waiting for Redis..."
-while ! nc -z ${REDIS_HOST:-redis} ${REDIS_PORT:-6379}; do
-  sleep 0.1
-done
-echo "Redis started"
+  echo "Waiting for database..."
+  while ! nc -z -w 1 "${DB_HOST:-db}" "${DB_PORT:-5432}"; do
+    sleep 0.2
+  done
+  echo "Database started"
 
-echo "Running Prisma migrations..."
-npx prisma migrate deploy
-npx prisma generate
+  echo "Waiting for Redis..."
+  while ! nc -z -w 1 "${REDIS_HOST:-redis}" "${REDIS_PORT:-6379}"; do
+    sleep 0.2
+  done
+  echo "Redis started"
 
-echo "Starting backend..."
-exec "$@"
+fi
+
+  echo "Running Prisma migrations..."
+  npx prisma migrate deploy
+
+  echo "Generating Prisma Client..."
+  npx prisma generate
+
+  echo "Starting backend..."
+  exec "$@"
