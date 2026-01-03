@@ -11,6 +11,8 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { SigninDto, SignupDto } from './dto';
+import Email from 'src/utils/emails';
+import { authenticator } from 'otplib';
 
 @Injectable()
 export class AuthService {
@@ -31,16 +33,30 @@ export class AuthService {
           date_of_birth: dto.dateOfBirth,
           last_name: dto.lastName,
           first_name: dto.firstName,
+          fullName: dto.fullName,
           gender: dto.gender,
           avatarUrl: dto.avatarUrl,
-          role: dto.role,
-          status: dto.status,
+          role: dto.role || 'user',
+          status: dto.status || 'pending',
           address: dto.address,
           hash,
         },
       });
 
-      return this.signToken(user.id, user.email);
+      const userBody = {
+        email: user.email,
+        fullName: dto.fullName,
+      };
+
+      authenticator.options = { step: 90 };
+
+      const secret = process.env.OTP_KEY_SECRET || '';
+
+      const otp = authenticator.generate(secret);
+
+      await new Email(userBody, '', otp).sendOTP();
+
+      return { message: 'OTP is sent, please check your email!' };
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -84,20 +100,33 @@ export class AuthService {
   async signToken(
     userId: string,
     email: string,
-  ): Promise<{ access_token: string }> {
+  ): Promise<{ access_token: string; data: any; status: string }> {
     const payload = {
       sub: userId,
       email,
     };
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Credentials incorrect');
+    }
+
     const secret = this.config.get('JWT_SECRET');
 
     const token = await this.jwt.signAsync(payload, {
       expiresIn: '15m',
-      secret: secret,
+      secret,
     });
 
     return {
       access_token: token,
+      data: user,
+      status: 'success',
     };
   }
 }

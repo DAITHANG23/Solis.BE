@@ -13,7 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "dev": "docker-compose -f docker-compose.dev.yaml up -d",
-    "dev:build": "docker-compose -f docker-compose.dev.yaml up --build -d",
+    "dev:build": "docker-compose -f docker-compose.dev.yaml up --build",
     "dev:down": "docker-compose -f docker-compose.dev.yaml down",
     "dev:clean": "docker-compose -f docker-compose.dev.yaml down -v",
     "prod": "docker-compose up -d",
@@ -37,6 +37,7 @@
   "dependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -48,12 +49,16 @@
     "argon2": "^0.44.0",
     "class-validator": "^0.14.2",
     "dotenv": "^17.2.3",
+    "handlebars": "^4.7.8",
     "husky": "^9.1.7",
+    "ioredis": "^5.8.2",
+    "nodemailer": "^7.0.12",
+    "otplib": "^12.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -65,6 +70,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.19.1",
+    "@types/nodemailer": "^7.0.4",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.2",

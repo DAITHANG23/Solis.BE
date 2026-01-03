@@ -12,8 +12,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { SigninDto, SignupDto } from './dto';
-import { LocalAuthGuard } from './guard';
+import { SigninDto, SignoutResponseDto, SignupDto } from './dto';
+import { JwtAuthGuard, LocalAuthGuard } from './guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -22,7 +22,7 @@ export class AuthController {
 
   @Post('signup')
   @ApiCreatedResponse({
-    description: 'Sigup',
+    description: 'Signup',
     type: SignupDto,
   })
   @ApiBadRequestResponse({
@@ -34,7 +34,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @ApiCreatedResponse({
-    description: 'Sigin',
+    description: 'Signin',
     type: SigninDto,
   })
   @ApiBadRequestResponse({
@@ -44,5 +44,21 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   signin(@Body() dto: SigninDto) {
     return this.authService.signin(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiCreatedResponse({
+    description: 'Signout',
+    type: SignoutResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'User cannot sign out. Try again!',
+  })
+  @Post('signout')
+  @HttpCode(HttpStatus.OK)
+  signout() {
+    return {
+      message: 'Signed out successfully',
+    };
   }
 }
