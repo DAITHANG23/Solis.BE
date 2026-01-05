@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClientModule } from './client/clients.module';
 import { GatewayModule } from './gateway/gatewat.module';
+import { RedisModule } from './redis';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { GatewayModule } from './gateway/gatewat.module';
     AuthModule,
     ClientModule,
     GatewayModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

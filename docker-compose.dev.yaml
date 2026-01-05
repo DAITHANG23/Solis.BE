@@ -20,8 +20,9 @@ services:
       - PORT=${PORT}
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9001/api/v1/health']
       interval: 30s
@@ -30,7 +31,7 @@ services:
       start_period: 60s
     depends_on:
       - db
-      - redis
+      # - redis
     networks:
       - restaurants_booking_admin_network
   db:
@@ -45,13 +46,13 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - restaurants_booking_admin_network
-  redis:
-    image: redis:7
-    restart: unless-stopped
-    ports:
-      - '6378:6378'
-    networks:
-      - restaurants_booking_admin_network
+  # redis:
+  #   image: redis:7
+  #   restart: unless-stopped
+  #   ports:
+  #     - '6378:6379'
+  #   networks:
+  #     - restaurants_booking_admin_network
   prisma-studio:
     image: node:20-alpine
     working_dir: /app

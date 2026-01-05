@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import Handlebars from 'handlebars';
 import fs from 'fs';
+import path from 'path';
 type IUserEmail = {
   email?: string;
   fullName?: string;
@@ -34,12 +35,21 @@ export default class Email {
     } as SMTPTransport.Options);
   }
 
-  async send(subject: string, templateEmail: string): Promise<void> {
-    const layout = fs.readFileSync('layouts/email.hbs', 'utf8');
-    const content = fs.readFileSync(
-      `../views/emails/templateMail/${templateEmail}.hbs`,
+  async send(templateEmail: string, subject: string): Promise<void> {
+    const layoutPath = path.join(__dirname, '../views/emails/layouts/main.hbs');
+    const contentPath = path.join(
+      __dirname,
+      `../views/emails/templateMails/${templateEmail}.hbs`,
+    );
+
+    const stylePartial = fs.readFileSync(
+      path.join(__dirname, '../views/emails/partials/style.hbs'),
       'utf8',
     );
+
+    Handlebars.registerPartial('style', stylePartial);
+    const layout = fs.readFileSync(layoutPath, 'utf8');
+    const content = fs.readFileSync(contentPath, 'utf8');
 
     const template = Handlebars.compile(layout);
 
