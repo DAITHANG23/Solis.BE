@@ -4,6 +4,8 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -12,8 +14,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { SigninDto, SignupDto } from './dto';
-import { LocalAuthGuard } from './guard';
+import { SigninDto, SignoutResponseDto, SignupDto } from './dto';
+import { JwtAuthGuard, LocalAuthGuard } from './guard';
+import crypto from 'crypto';
+import type { FastifyReply } from 'fastify';
+import { isProd } from 'src/utils/constants';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -22,7 +27,7 @@ export class AuthController {
 
   @Post('signup')
   @ApiCreatedResponse({
-    description: 'Sigup',
+    description: 'Signup',
     type: SignupDto,
   })
   @ApiBadRequestResponse({
@@ -34,7 +39,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @ApiCreatedResponse({
-    description: 'Sigin',
+    description: 'Signin',
     type: SigninDto,
   })
   @ApiBadRequestResponse({
@@ -42,7 +47,50 @@ export class AuthController {
   })
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  signin(@Body() dto: SigninDto) {
-    return this.authService.signin(dto);
+  signin(
+    @Body() dto: SigninDto,
+    @Res({ passthrough: true }) res: FastifyReply,
+  ) {
+    const sessionId = crypto.randomBytes(16).toString('hex');
+
+    const ttlSeconds = 60 * 60 * 24 * 7;
+    if (isProd) {
+      res.setCookie('sessionId', sessionId, {
+        expires: new Date(Date.now() + ttlSeconds * 1000),
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+        domain: '.domiquefusion.store',
+      });
+    }
+
+    return this.authService.signin(dto, sessionId, ttlSeconds);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiCreatedResponse({
+    description: 'Signout',
+    type: SignoutResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'User cannot sign out. Try again!',
+  })
+  @Post('signout')
+  @HttpCode(HttpStatus.OK)
+  signout(@Req() req: any, @Res({ passthrough: true }) res: FastifyReply) {
+    const sessionId = req.cookies.sessionId;
+    res.clearCookie('sessionId', {
+      httpOnly: isProd ? true : false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
+    return this.authService.signout(sessionId);
+  }
+
+  @Post('verify-otp')
+  @HttpCode(HttpStatus.OK)
+  verifyOtp(@Body() dto: SignupDto, @Body('otp') otp: string) {
+    return this.authService.verifyOtp(dto, otp);
   }
 }

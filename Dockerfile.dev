@@ -12,11 +12,8 @@ RUN npm ci
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# copy toàn bộ source code
-COPY . .
-
-# build NestJS
-RUN npm run build
+# # build NestJS
+# RUN npm run build
 
 # copy entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

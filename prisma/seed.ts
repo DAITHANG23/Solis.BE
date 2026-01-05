@@ -16,6 +16,7 @@ async function main() {
       email: 'adminTest@gmail.com',
       first_name: 'Admin',
       last_name: 'Test',
+      full_name: 'Admin Test',
       role: 'admin',
       hash: await argon.hash('AdminTest123!'),
       address: '123 Admin St, Admin City, Admin State, 12345',

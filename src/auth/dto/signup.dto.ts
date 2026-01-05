@@ -9,6 +9,8 @@ import {
   IsIn,
 } from 'class-validator';
 export class SignupDto {
+  id: string;
+
   @ApiProperty({
     description: 'Email address of the user',
     example: 'admin@domiquefusion.store',
@@ -52,6 +54,15 @@ export class SignupDto {
   lastName: string;
 
   @ApiProperty({
+    description: 'Last name of the user',
+    example: 'Nguyen',
+  })
+  @IsString({ message: 'Full name must be a string' })
+  @IsNotEmpty({ message: 'Full name cannot be empty' })
+  @Length(1, 40, { message: 'Full name must be between 1 and 40 characters' })
+  fullName: string;
+
+  @ApiProperty({
     description: 'Date of birth of the user',
     example: '23-06-1997',
   })
@@ -75,7 +86,7 @@ export class SignupDto {
   @IsString({ message: 'Role must be a string' })
   @IsOptional()
   @IsIn(['admin', 'user', 'accountant', 'restaurantManager', 'conceptManager'])
-  role: string = 'user';
+  role?: string = 'user';
 
   @ApiProperty({
     description: 'Gender of the user',
@@ -93,7 +104,7 @@ export class SignupDto {
   @IsString({ message: 'Status must be a string' })
   @IsOptional()
   @IsIn(['verify', 'pending', 'restrict', 'cancel'])
-  status: string = 'pending';
+  status?: string = 'pending';
 
   @ApiProperty({
     description: 'Avatar of the user',
