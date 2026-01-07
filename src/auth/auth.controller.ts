@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   HttpCode,
   HttpStatus,
   Post,
@@ -16,14 +17,17 @@ import {
 import { AuthService } from './auth.service';
 import { SigninDto, SignoutResponseDto, SignupDto } from './dto';
 import { JwtAuthGuard, LocalAuthGuard } from './guard';
-import crypto from 'crypto';
 import type { FastifyReply } from 'fastify';
 import { isProd } from 'src/utils/constants';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private prisma: PrismaService,
+  ) {}
 
   @Post('signup')
   @ApiCreatedResponse({
@@ -47,15 +51,25 @@ export class AuthController {
   })
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  signin(
+  async signin(
     @Body() dto: SigninDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
-    const sessionId = crypto.randomBytes(16).toString('hex');
-
     const ttlSeconds = 60 * 60 * 24 * 7;
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Credentials incorrect');
+    }
+
+    const result = await this.authService.signToken(user.id, dto.email);
+
     if (isProd) {
-      res.setCookie('sessionId', sessionId, {
+      res.setCookie('accessToken', result.accessToken, {
         expires: new Date(Date.now() + ttlSeconds * 1000),
         httpOnly: true,
         secure: true,
@@ -65,7 +79,7 @@ export class AuthController {
       });
     }
 
-    return this.authService.signin(dto, sessionId, ttlSeconds);
+    return this.authService.signin(dto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -79,13 +93,12 @@ export class AuthController {
   @Post('signout')
   @HttpCode(HttpStatus.OK)
   signout(@Req() req: any, @Res({ passthrough: true }) res: FastifyReply) {
-    const sessionId = req.cookies.sessionId;
-    res.clearCookie('sessionId', {
+    res.clearCookie('accessToken', {
       httpOnly: isProd ? true : false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
-    return this.authService.signout(sessionId);
+    return this.authService.signout();
   }
 
   @Post('verify-otp')

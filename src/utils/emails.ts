@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 type IUserEmail = {
   email?: string;
-  fullName?: string;
+  firstName?: string;
 };
 
 export default class Email {
@@ -16,7 +16,7 @@ export default class Email {
   private otp: string;
   constructor(user: IUserEmail, url?: string, otp?: string) {
     this.to = user.email || '';
-    this.firstName = user.fullName?.split(' ')[0] || '';
+    this.firstName = user.firstName || '';
     this.url = url || '';
     this.otp = otp || '';
     this.from = `Domique Fusion <${process.env.EMAIL_FROM}>`;
@@ -30,7 +30,7 @@ export default class Email {
         user: process.env.EMAIL_USERNAME,
         pass: process.env.EMAIL_PASSWORD,
       },
-      logger: true, // bật log
+      logger: true,
       debug: true,
     } as SMTPTransport.Options);
   }
@@ -52,7 +52,7 @@ export default class Email {
     const content = fs.readFileSync(contentPath, 'utf8');
 
     const template = Handlebars.compile(layout);
-
+    console.log('firstName:', this.firstName);
     const html = template({
       subject,
       body: Handlebars.compile(content)({

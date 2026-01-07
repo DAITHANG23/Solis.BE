@@ -15,7 +15,18 @@ export class UserService {
   async updateUser(userId: string, dto: UserDto) {
     const user = await this.prisma.user.update({
       where: { id: userId },
-      data: { ...dto },
+      data: {
+        email: dto.email,
+        role: dto.role,
+        first_name: dto.firstName,
+        last_name: dto.lastName,
+        full_name: dto.fullName,
+        gender: dto.gender,
+        status: dto.status,
+        address: dto.address,
+        date_of_birth: dto.dateOfBirth,
+        avatarUrl: dto.avatarUrl,
+      },
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
