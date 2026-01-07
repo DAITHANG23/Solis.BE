@@ -37,7 +37,7 @@ export class AuthService {
     try {
       const userBody = {
         email: dto.email,
-        fullName: dto.fullName,
+        firstName: dto.firstName,
       };
 
       authenticator.options = { step: 90 };
@@ -65,7 +65,7 @@ export class AuthService {
     }
   }
 
-  async signin(dto: SigninDto, sessionId?: string, ttlSeconds?: number) {
+  async signin(dto: SigninDto) {
     const user = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
@@ -81,7 +81,7 @@ export class AuthService {
     if (!pwMatches) {
       throw new ForbiddenException('Credentials incorrect');
     }
-    return this.signToken(user.id, user.email, sessionId, ttlSeconds);
+    return this.signToken(user.id, user.email);
   }
 
   async validateUserCreds(email: string, password: string): Promise<any> {
@@ -98,9 +98,7 @@ export class AuthService {
   async signToken(
     userId: string,
     email: string,
-    sessionId?: string,
-    ttlSeconds?: number,
-  ): Promise<{ access_token: string; data: any; status: string }> {
+  ): Promise<{ accessToken: string; data: any; status: string }> {
     const payload = {
       sub: userId,
       email,
@@ -122,29 +120,18 @@ export class AuthService {
       secret,
     });
 
-    await this.redisService.clientInstance.setex(
-      `session:${sessionId}`,
-      ttlSeconds || 60 * 60 * 24 * 7,
-      token,
-    );
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { hash, ...userWithNoHash } = user;
 
     return {
-      access_token: token,
+      accessToken: token || '',
       data: userWithNoHash,
       status: 'success',
     };
   }
 
-  async signout(sessionId: string) {
-    if (!sessionId) {
-      throw new UnauthorizedException('Session ID is required');
-    }
-
-    await this.redisService.clientInstance.del(`session:${sessionId}`);
-
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async signout() {
     return { message: 'Signed out successfully', status: 'success' };
   }
 
@@ -194,7 +181,7 @@ export class AuthService {
     await this.redisService.clientInstance.del(`otp:${dto.email}`);
 
     const url = `${process.env.FRONTEND_URL}/login`;
-    const userEmail = { email: dto.email, fullName: dto.fullName };
+    const userEmail = { email: dto.email, firstName: dto.firstName };
     await new Email(userEmail, url).sendWelcome();
 
     return { message: 'Signup successful! Please login.', status: 'success' };
