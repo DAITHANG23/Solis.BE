@@ -1,39 +1,33 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsString } from 'class-validator';
 
 export class UserDto {
   @IsEmail()
-  @IsOptional()
-  email?: string;
+  email: string;
 
   @IsString()
-  @IsOptional()
-  firstName?: string;
+  firstName: string;
 
   @IsString()
-  @IsOptional()
-  lastName?: string;
+  lastName: string;
 
   @IsString()
-  @IsOptional()
-  role?: string;
+  fullName: string;
 
   @IsString()
-  @IsOptional()
-  dateOfBirth?: string;
+  role: string;
 
   @IsString()
-  @IsOptional()
-  status?: string;
+  dateOfBirth: string;
 
   @IsString()
-  @IsOptional()
-  address?: string;
+  status: string;
 
   @IsString()
-  @IsOptional()
-  gender?: string;
+  address: string;
 
   @IsString()
-  @IsOptional()
-  avatarUrl?: string;
+  gender: string;
+
+  @IsString()
+  avatarUrl: string;
 }
