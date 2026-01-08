@@ -14,6 +14,12 @@ import { SigninDto, SignupDto } from './dto';
 import Email from 'src/utils/emails';
 import { authenticator } from 'otplib';
 import { RedisService } from 'src/redis';
+import { isProd } from 'src/utils/constants';
+
+type JwtPayload = {
+  sub: string;
+  email: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -98,7 +104,12 @@ export class AuthService {
   async signToken(
     userId: string,
     email: string,
-  ): Promise<{ accessToken: string; data: any; status: string }> {
+  ): Promise<{
+    data: any;
+    accessToken: string;
+    refreshToken: string;
+    status: string;
+  }> {
     const payload = {
       sub: userId,
       email,
@@ -113,21 +124,82 @@ export class AuthService {
     if (!user) {
       throw new ForbiddenException('Credentials incorrect');
     }
-    const secret = this.config.get('JWT_SECRET');
 
-    const token = await this.jwt.signAsync(payload, {
-      expiresIn: '15m',
-      secret,
+    const accessToken = await this.createAccessToken(payload);
+    const refreshToken = await this.createRefreshToken(payload);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken },
     });
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { hash, ...userWithNoHash } = user;
 
-    return {
-      accessToken: token || '',
+    const responseData: any = {
       data: userWithNoHash,
       status: 'success',
     };
+
+    if (!isProd) {
+      responseData.accessToken = accessToken || '';
+      responseData.refreshToken = refreshToken || '';
+    }
+
+    return responseData;
+  }
+
+  async refreshToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; status: string }> {
+    if (!refreshToken)
+      throw new UnauthorizedException('No refresh token provided');
+
+    const payload = await this.verifyRefreshToken(refreshToken);
+
+    const user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+
+    if (!user || user.refreshToken !== refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const accessToken = await this.createAccessToken({
+      email: payload.email,
+      sub: payload.sub,
+    });
+
+    return { accessToken, status: 'success' };
+  }
+
+  async createAccessToken(payload: JwtPayload) {
+    const secret = this.config.get('JWT_ACCESS_TOKEN_SECRET');
+
+    const token = await this.jwt.signAsync(payload, {
+      expiresIn: '1h',
+      secret,
+    });
+
+    return token;
+  }
+
+  async createRefreshToken(payload: JwtPayload) {
+    const secret = this.config.get('JWT_REFRESH_TOKEN_SECRET');
+
+    const token = await this.jwt.signAsync(payload, {
+      expiresIn: '7d',
+      secret,
+    });
+
+    return token;
+  }
+
+  async verifyRefreshToken(token: string) {
+    const secret = this.config.get('JWT_REFRESH_TOKEN_SECRET');
+
+    const payload = await this.jwt.verifyAsync(token, { secret });
+
+    return payload;
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

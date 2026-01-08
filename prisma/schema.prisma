@@ -24,6 +24,7 @@ model User {
   status              String
   address             String
   avatarUrl           String
+  refreshToken        String?
 }
 
 model Client {
