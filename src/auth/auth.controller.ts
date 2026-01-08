@@ -55,7 +55,9 @@ export class AuthController {
     @Body() dto: SigninDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
-    const ttlSeconds = 60 * 60 * 24 * 7;
+    const accessTokenTtlSeconds = 60 * 60 * 24;
+    const refreshTokenTtlSeconds = 60 * 60 * 24 * 7;
+
     const user = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
@@ -70,7 +72,16 @@ export class AuthController {
 
     if (isProd) {
       res.setCookie('accessToken', result.accessToken, {
-        expires: new Date(Date.now() + ttlSeconds * 1000),
+        expires: new Date(Date.now() + accessTokenTtlSeconds * 1000),
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+        domain: '.domiquefusion.store',
+      });
+
+      res.setCookie('refreshToken', result.refreshToken, {
+        expires: new Date(Date.now() + refreshTokenTtlSeconds * 1000),
         httpOnly: true,
         secure: true,
         sameSite: 'none',
@@ -98,12 +109,48 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
+
+    res.clearCookie('refreshToken', {
+      httpOnly: isProd ? true : false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
     return this.authService.signout();
   }
 
+  @ApiCreatedResponse({
+    description: 'Verify OTP',
+    type: SignoutResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'User cannot verify OTP. Try again!',
+  })
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   verifyOtp(@Body() dto: SignupDto, @Body('otp') otp: string) {
     return this.authService.verifyOtp(dto, otp);
+  }
+
+  @ApiCreatedResponse({
+    description: 'Refresh Access Token',
+  })
+  @ApiBadRequestResponse({
+    description: 'Cannot refresh access token. Try again!',
+  })
+  @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(
+    @Body('refreshToken') refreshToken: string,
+    @Req() req: any,
+  ) {
+    let refreshTokenValue = '';
+
+    if (isProd) {
+      refreshTokenValue = req.cookies['refreshToken'] || refreshToken;
+    } else {
+      refreshTokenValue = refreshToken;
+    }
+
+    return this.authService.refreshToken(refreshTokenValue);
   }
 }
