@@ -22,59 +22,59 @@ jobs:
       - run: npm ci
 
   # Deploy chỉ khi push vào main
-  deploy-production:
-    needs: build
-    runs-on: ubuntu-latest
-    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  # deploy-production:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup SSH Key
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
+  #     - name: Setup SSH Key
+  #       run: |
+  #         echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+  #         chmod 600 private_key.pem
 
-      - name: Copy files to EC2 server
-        run: |
-          scp -i private_key.pem -o StrictHostKeyChecking=no -r \
-            ./* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ec2-user/Solis.BE/
+  #     - name: Copy files to EC2 server
+  #       run: |
+  #         scp -i private_key.pem -o StrictHostKeyChecking=no -r \
+  #           ./* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ec2-user/Solis.BE/
 
-      - name: Create .env and Deploy on EC2
-        run: |
-          ssh -i private_key.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
-            cd /home/ec2-user/Solis.BE
-            
-            # Create .env
-            cat > .env << 'ENVFILE'
-          PORT=${{ secrets.PORT }}
-          NODE_ENV=production
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ secrets.DB_PORT }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          JWT_ACCESS_TOKEN_SECRET=${{ secrets.JWT_ACCESS_TOKEN_SECRET }}
-          JWT_REFRESH_TOKEN_SECRET=${{ secrets.JWT_REFRESH_TOKEN_SECRET }}
-          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-          ENVFILE
-            
-            chmod 600 .env
-            
-            # Deploy
-            docker compose down || docker-compose down
-            docker compose build --no-cache || docker-compose build --no-cache
-            docker compose up -d || docker-compose up -d
+  #     - name: Create .env and Deploy on EC2
+  #       run: |
+  #         ssh -i private_key.pem -o StrictHostKeyChecking=no \
+  #           ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+  #           cd /home/ec2-user/Solis.BE
 
-            sleep 15
-            docker compose ps || docker-compose ps
-            docker compose logs --tail=50 || docker-compose logs --tail=50
+  #           # Create .env
+  #           cat > .env << 'ENVFILE'
+  #         PORT=${{ secrets.PORT }}
+  #         NODE_ENV=production
+  #         DATABASE_URL=${{ secrets.DATABASE_URL }}
+  #         DB_HOST=${{ secrets.DB_HOST }}
+  #         DB_PORT=${{ secrets.DB_PORT }}
+  #         DB_NAME=${{ secrets.DB_NAME }}
+  #         DB_USER=${{ secrets.DB_USER }}
+  #         DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+  #         JWT_ACCESS_TOKEN_SECRET=${{ secrets.JWT_ACCESS_TOKEN_SECRET }}
+  #         JWT_REFRESH_TOKEN_SECRET=${{ secrets.JWT_REFRESH_TOKEN_SECRET }}
+  #         FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+  #         ENVFILE
 
-            docker system prune -f
-          ENDSSH
+  #           chmod 600 .env
 
-      - name: Clean up
-        if: always()
-        run: rm -f private_key.pem
+  #           # Deploy
+  #           docker compose down || docker-compose down
+  #           docker compose build --no-cache || docker-compose build --no-cache
+  #           docker compose up -d || docker-compose up -d
+
+  #           sleep 15
+  #           docker compose ps || docker-compose ps
+  #           docker compose logs --tail=50 || docker-compose logs --tail=50
+
+  #           docker system prune -f
+  #         ENDSSH
+
+  #     - name: Clean up
+  #       if: always()
+  #       run: rm -f private_key.pem
