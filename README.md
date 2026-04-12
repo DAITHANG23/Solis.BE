@@ -1,98 +1,131 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Solis.BE - Admin Manager API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 🚀 Overview
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**Solis.BE** is the central **Admin Manager API** and **API Gateway** for the Restaurant Booking Ecosystem. It orchestrates communication between the frontend and various downstream microservices (such as `Luna.BE`), while managing core identity and access controls.
 
-## Description
+Built with **NestJS**, it leverages **Fastify** for high-performance request handling and **Redis** for scalable session and state management.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## 🏗️ Architecture & Logical Structure
 
-```bash
-$ yarn install
-```
+The project is designed with a modular architecture focused on scalability and maintainability:
 
-## Compile and run the project
+### 1. **Gateway Layer (`src/gateway`)**
 
-```bash
-# development
-$ yarn run start
+Acts as the entry point for cross-service operations. It uses the **Proxy Pattern** to forward requests to specialized microservices:
 
-# watch mode
-$ yarn run start:dev
+- **BookingProxy**: Orchestrates restaurant reservations.
+- **ConceptProxy**: Manages restaurant concepts and themes.
+- **ClientProxy**: Interfaces with client-specific logic.
 
-# production mode
-$ yarn run start:prod
-```
+### 2. **Identity & Access Management (IAM)**
 
-## Run tests
+- **Auth Module (`src/auth`)**: Handles JWT-based authentication, Passport strategies, and secure hashing with **Argon2**.
+- **User Module (`src/user`)**: Manages administrative and end-user profiles.
+- **Otplib Integration**: Provides two-factor authentication (2FA) capabilities for enhanced security.
 
-```bash
-# unit tests
-$ yarn run test
+### 3. **Infrastructure & Persistence**
 
-# e2e tests
-$ yarn run test:e2e
+- **Prisma Module (`src/prisma`)**: Type-safe ORM for PostgreSQL.
+- **Redis Module (`src/redis`)**: Centralized caching and shared state abstraction.
+- **Config Module (`src/config`)**: Environment-based configuration management.
 
-# test coverage
-$ yarn run test:cov
-```
+### 4. **Business Logic**
 
-## Deployment
+- **Clients Module (`src/client`)**: Specific business domains related to restaurant clients and owners.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+---
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 🛠️ Tech Stack ("Flow Scale")
+
+- **Framework**: [NestJS](https://nestjs.com/) (Modular Node.js framework)
+- **HTTP Engine**: [Fastify](https://www.fastify.io/) (Maximum performance)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [Prisma ORM](https://www.prisma.io/)
+- **Caching**: [Redis](https://redis.io/)
+- **Documentation**: [Swagger](https://swagger.io/)
+- **DevOps**: [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
+
+---
+
+## 🚦 Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- Yarn or NPM
+- Docker and Docker Compose
+
+### Environment Setup
+
+Copy the example environment file and fill in the required values:
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+cp .env.example .env
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Installation
 
-## Resources
+```bash
+yarn install
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### Running the Project
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+#### 🐳 Development (Docker - Recommended)
 
-## Support
+The project is optimized for Docker-based development:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+# Start all services (Backend, DB, Redis)
+npm run dev
 
-## Stay in touch
+# Rebuild and start
+npm run dev:build
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Clean stop
+npm run dev:clean
+```
 
-## License
+#### 💻 Local Development
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+# Development mode
+npm run start:dev
+
+# Production mode
+npm run start:prod
+```
+
+---
+
+## 🗄️ Database Management (Prisma)
+
+- **Generate Client**: `npm run db:generate`
+- **Push Schema**: `npm run db:push`
+- **Studio (GUI)**: `npm run db:studio`
+- **Run Migrations (Docker)**: `npm run db:migrate`
+
+---
+
+## 📖 API Documentation
+
+Once the application is running, you can access the interactive Swagger documentation at:
+`http://localhost:3000/api-docs`
+
+_Base API Prefix:_ `api/v1`
+
+---
+
+## 🛡️ Scalability & Quality Control
+
+- **Scalability**: Stateless architecture ready for horizontal scaling via Docker and Redis.
+- **Code Quality**: ESLint, Prettier, and Pre-commit hooks via **Husky**.
+- **Commits**: Conventional commits enforced by **Commitlint**.
+
+---
+
+## 📄 License
+
+This project is [UNLICENSED](LICENSE).
