@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
@@ -82,21 +81,13 @@ export class AuthService {
       throw new ForbiddenException('Credentials incorrect');
     }
 
-    const pwMatches = await argon.verify(user.hash, dto.password);
-
-    if (!pwMatches) {
-      throw new ForbiddenException('Credentials incorrect');
-    }
     return this.signToken(user.id, user.email);
   }
 
-  async validateUserCreds(email: string, password: string): Promise<any> {
+  async validateUserCreds(email: string): Promise<any> {
     const user = await this.userService.getUser(email);
 
     if (!user) throw new BadRequestException();
-
-    if (!(await argon.verify(user.hash, password)))
-      throw new UnauthorizedException();
 
     return user;
   }
@@ -132,11 +123,9 @@ export class AuthService {
       where: { id: userId },
       data: { refreshToken },
     });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hash, ...userWithNoHash } = user;
 
     const responseData: any = {
-      data: userWithNoHash,
+      data: user,
       status: 'success',
     };
 
@@ -211,7 +200,6 @@ export class AuthService {
     if (!otp) {
       throw new BadRequestException('OTP is required');
     }
-    const hash = await argon.hash(dto.password);
 
     const storeOtp = await this.redisService.clientInstance.get(
       `otp:${dto.email}`,
@@ -234,7 +222,6 @@ export class AuthService {
           role: dto.role || 'user',
           status: dto.status || 'pending',
           address: dto.address,
-          hash,
         },
       });
     } catch (error) {

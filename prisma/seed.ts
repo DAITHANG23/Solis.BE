@@ -1,6 +1,5 @@
 import { PrismaClient } from '../generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
-import * as argon from 'argon2';
 
 const pool = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 
@@ -18,7 +17,6 @@ async function main() {
       last_name: 'Test',
       full_name: 'Admin Test',
       role: 'admin',
-      hash: await argon.hash('AdminTest123!'),
       address: '123 Admin St, Admin City, Admin State, 12345',
       date_of_birth: String(new Date('1990-01-01')),
       gender: 'male',

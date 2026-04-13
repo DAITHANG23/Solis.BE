@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { UserDto } from './dto';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/guard';
@@ -33,5 +33,11 @@ export class UserController {
   @Patch('updateUser')
   updateUser(@GetUser('id') userId: string, @Body() dto: UserDto) {
     return this.userService.updateUser(userId, dto);
+  }
+
+  @ApiBearerAuth()
+  @Post('createUser')
+  createUser(@Body() dto: UserDto) {
+    return this.userService.createUser(dto);
   }
 }
