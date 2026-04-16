@@ -3,16 +3,16 @@ import {
   ForbiddenException,
   Injectable,
   UnauthorizedException,
+  HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
-import { SigninDto, SignupDto } from './dto';
+import { SignupDto, GoogleLoginDto } from './dto';
+import { OAuth2Client } from 'google-auth-library';
 import Email from 'src/utils/emails';
-import { authenticator } from 'otplib';
 import { RedisService } from 'src/redis';
 import { isProd } from 'src/utils/constants';
 
@@ -31,72 +31,50 @@ export class AuthService {
     private redisService: RedisService,
   ) {}
 
-  async signup(dto: SignupDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-
-    if (user) {
-      throw new ForbiddenException('Email is existed');
-    }
+  async googleLogin(dto: GoogleLoginDto) {
+    const client = new OAuth2Client(this.config.get('GOOGLE_CLIENT_ID'));
 
     try {
-      const userBody = {
-        email: dto.email,
-        firstName: dto.firstName,
-      };
+      const ticket = await client.verifyIdToken({
+        idToken: dto.idToken,
+        audience: this.config.get('GOOGLE_CLIENT_ID'),
+      });
 
-      authenticator.options = { step: 90 };
-
-      const secret = process.env.OTP_KEY_SECRET || '';
-
-      const otp = authenticator.generate(secret);
-
-      await new Email(userBody, '', otp).sendOTP();
-
-      await this.redisService.clientInstance.setex(
-        `otp:${dto.email}`,
-        300,
-        otp,
-      );
-
-      return { message: 'OTP is sent, please check your email!' };
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new ForbiddenException('Credentials taken');
-        }
+      const payload = ticket.getPayload();
+      if (!payload) {
+        throw new BadRequestException('Invalid Google token');
       }
-      throw error;
+
+      const { email, sub, picture } = payload;
+
+      let user = await this.validateUserCreds(email as string);
+
+      if (!user.googleId) {
+        // Update user with googleId if they already existed by email
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { googleId: sub, avatarUrl: picture },
+        });
+      }
+
+      return this.signToken(user.id, user.email);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new UnauthorizedException('Google authentication failed');
     }
   }
 
-  async signin(dto: SigninDto) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
-    });
-
-    if (!user) {
-      throw new ForbiddenException('Credentials incorrect');
-    }
-
-    const pwMatches = await argon.verify(user.hash, dto.password);
-
-    if (!pwMatches) {
-      throw new ForbiddenException('Credentials incorrect');
-    }
-    return this.signToken(user.id, user.email);
-  }
-
-  async validateUserCreds(email: string, password: string): Promise<any> {
+  async validateUserCreds(email: string): Promise<any> {
     const user = await this.userService.getUser(email);
 
-    if (!user) throw new BadRequestException();
-
-    if (!(await argon.verify(user.hash, password)))
-      throw new UnauthorizedException();
+    if (!user) {
+      throw new ForbiddenException(
+        'You do not have permission to login with Google',
+      );
+    }
 
     return user;
   }
@@ -132,11 +110,9 @@ export class AuthService {
       where: { id: userId },
       data: { refreshToken },
     });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hash, ...userWithNoHash } = user;
 
     const responseData: any = {
-      data: userWithNoHash,
+      data: user,
       status: 'success',
     };
 
@@ -211,7 +187,6 @@ export class AuthService {
     if (!otp) {
       throw new BadRequestException('OTP is required');
     }
-    const hash = await argon.hash(dto.password);
 
     const storeOtp = await this.redisService.clientInstance.get(
       `otp:${dto.email}`,
@@ -234,7 +209,6 @@ export class AuthService {
           role: dto.role || 'user',
           status: dto.status || 'pending',
           address: dto.address,
-          hash,
         },
       });
     } catch (error) {

@@ -1,6 +1,5 @@
 import { PrismaClient } from '../generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
-import * as argon from 'argon2';
 
 const pool = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 
@@ -10,17 +9,16 @@ const prisma = new PrismaClient({
 
 async function main() {
   const adminTest = await prisma.user.upsert({
-    where: { email: 'adminTest@gmail.com' },
+    where: { email: 'nguyendaithang23061997@gmail.com' },
     update: {},
     create: {
-      email: 'adminTest@gmail.com',
-      first_name: 'Admin',
-      last_name: 'Test',
-      full_name: 'Admin Test',
+      email: 'nguyendaithang23061997@gmail.com',
+      first_name: 'Thang',
+      last_name: 'Nguyen Dai',
+      full_name: 'Nguyen Dai Thang',
       role: 'admin',
-      hash: await argon.hash('AdminTest123!'),
       address: '123 Admin St, Admin City, Admin State, 12345',
-      date_of_birth: String(new Date('1990-01-01')),
+      date_of_birth: String(new Date('1997-06-23')),
       gender: 'male',
       avatarUrl: 'https://example.com/avatar/adminTest.png',
       status: 'active',

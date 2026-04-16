@@ -29,9 +29,25 @@ export class UserService {
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hash, ...userWithNoHash } = user;
+    return user;
+  }
 
-    return userWithNoHash;
+  async createUser(dto: UserDto) {
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        role: dto.role,
+        first_name: dto.firstName,
+        last_name: dto.lastName,
+        full_name: dto.fullName,
+        gender: dto.gender,
+        status: dto.status,
+        address: dto.address,
+        date_of_birth: dto.dateOfBirth,
+        avatarUrl: dto.avatarUrl,
+      },
+    });
+
+    return user;
   }
 }

@@ -14,16 +14,16 @@ model User {
   id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   created_at          DateTime @default(now()) @db.Timestamptz(6)
   email               String   @unique
-  hash                String
+  googleId            String?  @unique
   date_of_birth       String?
-  last_name           String
-  first_name          String
-  full_name           String
-  role                String
-  gender              String
-  status              String
-  address             String
-  avatarUrl           String
+  last_name           String?
+  first_name          String?
+  full_name           String?
+  role                String   @default("user")
+  gender              String?
+  status              String   @default("pending")
+  address             String?
+  avatarUrl           String?
   refreshToken        String?
 }
 
