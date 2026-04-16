@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { UserDto } from './dto';
 import { UserService } from './user.service';
-import { JwtAuthGuard } from 'src/auth/guard';
-import { GetUser } from 'src/auth/decorator';
+import { JwtAuthGuard, RolesGuard } from 'src/auth/guard';
+import { GetUser, Roles } from 'src/auth/decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -12,7 +12,7 @@ import {
 import type { User } from 'generated/prisma';
 
 @ApiTags('User')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
@@ -33,5 +33,12 @@ export class UserController {
   @Patch('updateUser')
   updateUser(@GetUser('id') userId: string, @Body() dto: UserDto) {
     return this.userService.updateUser(userId, dto);
+  }
+
+  @ApiBearerAuth()
+  @Post('createUser')
+  @Roles('admin')
+  createUser(@Body() dto: UserDto) {
+    return this.userService.createUser(dto);
   }
 }

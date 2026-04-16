@@ -3,7 +3,6 @@ CREATE TABLE "User" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "email" TEXT NOT NULL,
-    "hash" TEXT NOT NULL,
     "date_of_birth" TEXT,
     "last_name" TEXT NOT NULL,
     "first_name" TEXT NOT NULL,

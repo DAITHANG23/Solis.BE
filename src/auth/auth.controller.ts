@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  ForbiddenException,
   HttpCode,
   HttpStatus,
   Post,
@@ -15,8 +14,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { SigninDto, SignoutResponseDto, SignupDto } from './dto';
-import { JwtAuthGuard, LocalAuthGuard } from './guard';
+import { GoogleLoginDto, SignoutResponseDto, SignupDto } from './dto';
+import { JwtAuthGuard } from './guard';
 import type { FastifyReply } from 'fastify';
 import { isProd } from 'src/utils/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -29,46 +28,19 @@ export class AuthController {
     private prisma: PrismaService,
   ) {}
 
-  @Post('signup')
-  @ApiCreatedResponse({
-    description: 'Signup',
-    type: SignupDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'User cannot sign up. Try again!',
-  })
-  signup(@Body() dto: SignupDto) {
-    return this.authService.signup(dto);
-  }
-
-  @UseGuards(LocalAuthGuard)
-  @ApiCreatedResponse({
-    description: 'Signin',
-    type: SigninDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'User cannot sign in. Try again!',
-  })
-  @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signin(
-    @Body() dto: SigninDto,
+  @Post('google-login')
+  async googleLogin(
+    @Body() dto: GoogleLoginDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
+    const result = await this.authService.googleLogin(dto);
+    return this.setAuthCookies(res, result);
+  }
+
+  private setAuthCookies(res: FastifyReply, result: any) {
     const accessTokenTtlSeconds = 60 * 60 * 24;
     const refreshTokenTtlSeconds = 60 * 60 * 24 * 7;
-
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
-    });
-
-    if (!user) {
-      throw new ForbiddenException('Credentials incorrect');
-    }
-
-    const result = await this.authService.signToken(user.id, dto.email);
 
     if (isProd) {
       res.setCookie('accessToken', result.accessToken, {
@@ -90,7 +62,7 @@ export class AuthController {
       });
     }
 
-    return this.authService.signin(dto);
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)

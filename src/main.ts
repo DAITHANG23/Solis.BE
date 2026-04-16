@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { TransformInterceptor } from './utils/transform.interceptor';
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -15,7 +16,11 @@ async function bootstrap() {
 
   app.register(cookie, { secret: process.env.COOKIE_SECRET });
   app.setGlobalPrefix('api/v1');
-  app.enableCors({ origin: process.env.FRONTEND_URL || '*' });
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5001',
+    credentials: true,
+  });
+  app.useGlobalInterceptors(new TransformInterceptor());
   const config = new DocumentBuilder()
     .addBearerAuth()
     .setTitle('Admin Manager API')
