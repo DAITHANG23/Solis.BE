@@ -11,6 +11,7 @@ export class UserDto {
   lastName: string;
 
   @IsString()
+  @IsOptional()
   fullName: string;
 
   @IsString()
