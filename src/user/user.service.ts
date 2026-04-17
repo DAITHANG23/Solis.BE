@@ -39,7 +39,7 @@ export class UserService {
         role: dto.role,
         first_name: dto.firstName,
         last_name: dto.lastName,
-        full_name: dto.fullName,
+        full_name: `${dto.firstName} ${dto.lastName}`,
         gender: dto.gender,
         status: dto.status,
         address: dto.address,
