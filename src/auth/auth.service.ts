@@ -112,8 +112,7 @@ export class AuthService {
     });
 
     const responseData: any = {
-      data: user,
-      status: 'success',
+      user,
     };
 
     if (!isProd) {
