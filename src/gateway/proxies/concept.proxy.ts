@@ -9,9 +9,15 @@ export class ConceptProxyService {
 
   constructor(private http: HttpService) {}
 
-  async getAllConcepts() {
+  async getAllConcepts(role?: string) {
     try {
-      const res = await firstValueFrom(this.http.get<any>(`${this.baseUrl}/`));
+      const res = await firstValueFrom(
+        this.http.get<any>(`${this.baseUrl}/`, {
+          headers: {
+            'x-user-role': role || '',
+          },
+        }),
+      );
       return res.data;
     } catch (error) {
       this.handleError(error, 'Error fetching all concepts');

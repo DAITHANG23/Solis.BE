@@ -8,9 +8,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ClientDto } from 'src/client/dto';
+import { JwtAuthGuard } from 'src/auth/guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { UseGuards } from '@nestjs/common';
+import { Roles } from 'src/auth/decorator';
 
 @ApiTags('Gateway')
 @Controller('gateway')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class GatewayController {
   constructor(
     private clientProxy: ClientProxyService,
@@ -46,6 +51,7 @@ export class GatewayController {
 
   // Concept Endpoints
   @Get('concepts')
+  @Roles('admin')
   @ApiCreatedResponse({
     description: 'Get all concepts',
     type: [Object],
@@ -53,8 +59,9 @@ export class GatewayController {
   @ApiBadRequestResponse({
     description: 'Concepts list cannot get information. Try again!',
   })
-  getConcepts() {
-    return this.conceptProxy.getAllConcepts();
+  getConcepts(@Req() req: any) {
+    const role = req.user?.role;
+    return this.conceptProxy.getAllConcepts(role);
   }
 
   @Get('concepts/:id')

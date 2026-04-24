@@ -126,8 +126,9 @@ export class AuthService {
   async refreshToken(
     refreshToken: string,
   ): Promise<{ accessToken: string; status: string }> {
-    if (!refreshToken)
+    if (!refreshToken) {
       throw new UnauthorizedException('No refresh token provided');
+    }
 
     const payload = await this.verifyRefreshToken(refreshToken);
 
