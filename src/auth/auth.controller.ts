@@ -60,6 +60,9 @@ export class AuthController {
         path: '/',
         domain: '.domiquefusion.store',
       });
+
+      delete result.accessToken;
+      delete result.refreshToken;
     }
 
     return result;
@@ -114,15 +117,32 @@ export class AuthController {
   async refreshToken(
     @Body('refreshToken') refreshToken: string,
     @Req() req: any,
+    @Res({ passthrough: true }) res: FastifyReply,
   ) {
     let refreshTokenValue = '';
 
     if (isProd) {
-      refreshTokenValue = req.cookies['refreshToken'] || refreshToken;
+      refreshTokenValue = req.cookies['refreshToken'];
     } else {
       refreshTokenValue = refreshToken;
     }
 
-    return this.authService.refreshToken(refreshTokenValue);
+    const result = await this.authService.refreshToken(refreshTokenValue);
+
+    if (isProd) {
+      const accessTokenTtlSeconds = 60 * 60 * 24;
+      res.setCookie('accessToken', result.accessToken, {
+        expires: new Date(Date.now() + accessTokenTtlSeconds * 1000),
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+        domain: '.domiquefusion.store',
+      });
+
+      delete (result as any).accessToken;
+    }
+
+    return result;
   }
 }
